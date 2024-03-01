@@ -27,7 +27,7 @@
 Cypress.Commands.add("loginAndLogout", (email, password) => {
   cy.get('input[name="email"]').type(email);
   cy.get('input[type="password"]').type(password);
-  cy.get('[type="submit"]').click(); //sprawdź selektor przycisku logowania!
+  cy.get('[type="submit"]').click();
   cy.url().should("include", "/homepage");
   cy.get("#open-navigation-menu-mobile").click();
   cy.get("button.next-bve2vl.e1phyiqy2")
