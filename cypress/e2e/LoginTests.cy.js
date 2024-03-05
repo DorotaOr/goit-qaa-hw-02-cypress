@@ -1,5 +1,5 @@
-import loginPage from "./pages/Login";
-import homePage from "./pages/HomePage";
+import loginPage from "../pages/Login.cy";
+import homePage from "../pages/HomePage.cy";
 
 describe("User can visit GoIT page", () => {
   beforeEach("Go to page", () => {
