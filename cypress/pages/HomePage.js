@@ -1,12 +1,12 @@
 class homePage {
   constructor() {
-    this.courseHomePageWidget = 'url "include", "/homepage"';
+    this.courseHomePageWidget = 'include "/homepage"';
     this.openMenu = "#open-navigation-menu-mobile";
     this.nextButton = "button.next-bve2vl.e1phyiqy2";
   }
 
   goToCourseHomePage() {
-    cy.get(this.courseHomePageWidget);
+    cy.visit(this.courseHomePageWidget);
   }
 
   goToMenu() {

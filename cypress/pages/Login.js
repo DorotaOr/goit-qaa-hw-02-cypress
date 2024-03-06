@@ -1,7 +1,7 @@
 class loginPage {
   constructor() {
     this.url = "https://www.edu.goit.global/account/login";
-    this.emailInput = 'input[class="next-v891b4.eteu1jj2"]';
+    this.emailInput = 'input[class="next-v891b4 eteu1jj2"]';
     this.passwordInput = 'input[type="password"]';
     this.loginButton = 'button[type="submit"]';
   }
@@ -13,7 +13,7 @@ class loginPage {
   }
 
   loginUser(email, password) {
-    cy.get(this.emailInput, { timeout: 10000 })
+    cy.get(this.emailInput, { timeout: 5000 })
       //.should("be.visible")
       .type(email);
     cy.get(this.passwordInput).type(password);
