@@ -1,0 +1,35 @@
+# TEST Z WYKORZYSTANIEM PLIKU CSV Z DANYMI TESTOWYMI, DO WYKORZYSTANIA JAKO PARAMETRY W TEŚCIE
+config:
+  target: "http://httpbin.org/"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: Payload test
+  payload:
+    - path: "keywords.csv"
+      fields:
+        - "keyword1"
+        - "keyword2"
+      order: sequence # random
+      SkipHeader: true
+      SkipEmptyLines: true
+      # sequence przydziela wartości w kolejności, tj. każdemu kolejnemu użytkownikowi przydzielone są parametry z kolejnego wiersza w pliku csv
+      # random przydziela wartości losowo
+      # SkipHeader użyłabym, gdyby w pliku csv były nagłówki kolumn, aby je pominąć pobierając parametry
+      # SkipEmptyLines użyłabym, gdyby w pliku csv były puste wiersze, aby je pominąć pobierając parametry (SkipEmptyLines: true)
+      # cast to funkcja, która umożliwia konwersję wartości przed użyciem w teście, np. zmienić ze stringu na liczbę lub z jednego formatu na drugi
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get?param1={{ **keyword1** }}"
+      - post:
+          url: "{{ target }}post?param2={{ **keyword2** }}"
+          json:
+            username: "Test User"
+            password: "Temp Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"

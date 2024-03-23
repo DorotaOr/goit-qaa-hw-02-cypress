@@ -1,0 +1,45 @@
+# Uruchamianie testów artillery: (artillery run artillery/httpbin_1test.yml)
+# Debugging: najpierw (set DEBUG=http) potem (artillery run artillery/httpbin_1test.yml)
+# Jeśli chcę dodać instrukcję, aby wyprowadzić odpowiedzi do terminalu http: (DEBUG=http,http:response artillery run artillery/httpbin_1test.yml)
+# lub, ogólnie, wszystkie dostępne informacje Debug: (DEBUG=http* artillery run artillery/httpbin_1test.yml)
+config:
+  target: "http://httpbin.org/" #//wskazania adresu, na który będziemy wysyłać żądania
+
+  phases:
+    - duration: 10
+      arrivalRate: 1
+      name: Artillery First Test
+  # duration - czas trwania testu w sekundach
+  # arrivalRate - liczba wirtualnych użytkowników, którzy są dodawani co sekundę.
+
+  ensure: # (asercja) upewnij się czy...
+    - p95: "<=10"
+    - max: "<=1000"
+      statusCode: 200
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get" #Cały link będzie wyglądał jak “http://httpbin.org/get”, ale ponieważ już zapisałam hosta w zmiennej target, to w scenariuszu wykorzystam ją poprzez wpisanie jej w nawiasie klamrowym
+      - post:
+          url: "{{ target }}post" # Można też zapisać "/get" lub "/post"
+          json:
+            username: "Test User"
+            password: "Temp Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"
+      # Czyli dostęp do ciała odpowiedzi otrzymujemy za pomocą znaku $, a w wierszu poniżej wskazujemy nazwę zmiennej poleceniem as:, gdzie chcemy zapisać dane, które odczytano z ciała odpowiedzi. W naszym przypadku są to zmienne request_body i host.
+
+      - log: "Json value from response is {{request_body}}"
+      - log: "Host value form response is {{host}}"
+      # Dodaję konkretne kontrole:
+      - think: 1 # symulacja czasu oczekiwania użytkownika między tymi kolejnymi akcjami (1 sek.)
+      - assert: # (asercja) Sprawdzenie czy nasz system działa zgodnie z naszymi oczekiwaniami np. status, czas, zawartość odpowiedzi
+          - json: "$.args" # Sprawdza, czy odpowiedź serwera zawiera ten konkretny obiekt "args"
+            condition: "exists" # Warunek spełnienia jest taki, że musi to istnieć (te "args")
+          - json: "$.headers.Content-Length" # Sprawdza, czy odpowiedź zawiera w nagłówku ten konkretną treść: "Length"
+            condition: "<10" # Warunek spełnienia jest taki, że to co odczytamy musi mieć długość mniejszą niż 10 (cokolwiek to jest, np. < 10 znaków lub < 10 sek. itp.)

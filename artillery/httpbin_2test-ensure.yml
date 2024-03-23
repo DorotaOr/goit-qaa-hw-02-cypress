@@ -1,0 +1,51 @@
+config:
+  target: "http://httpbin.org/"
+
+  phases:
+    - duration: 60
+      arrivalRate: 5
+
+  ensure:
+    - p95: "<=10"
+    - max: "<=1000"
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}anything"
+          capture:
+            - json: "$.json"
+              as: "responseBody"
+      - log: "Response body is: {{responseBody}}"
+# config:
+#   target: "http://httpbin.org/" #//wskazania adresu, na który będziemy wysyłać żądania
+
+# phases:
+#   - duration: 60
+#     arrivalRate: 5
+# # duration - czas trwania testu w sekundach
+# # arrivalRate - liczba wirtualnych użytkowników, którzy wejdą co 1 sek. na stronę (GET) lub wykonają inną zadaną akcję (PUT, POST, DELETE itd.)
+
+# ensure: # "Upewnij się, że..."
+#   - p95: "<=10" # ...95% akcji będzie trwało co najwyżej 10 milisekund
+#   - max: "<=1000" # ...żadna akcja (np. wejście na stronę) nie będzie trwała dłużej niż 1000 milisekund
+
+# scenarios:
+#   - name: Getting a resource
+#     flow: #rozpoczyna każdy pojedynczy test
+#       - get:
+#           url: "{{ target }}anything" #Cały link będzie wyglądał jak “http://httpbin.org/get”, ale ponieważ już zapisałam hosta w zmiennej target, to w scenariuszu wykorzystam ją poprzez wpisanie jej w nawiasie klamrowym
+#           capture: # przechwyć część odpowiedzi i zapisać ją jako zmienną
+#             - json: "$.json" # przechwyć wartość elementu "json" z response body (ma on w tym wypadku wartość "null" - patrz link: https://httpbin.org/anything)...
+#               as: "responseBody" # ... i zapisz ten element jako zmienną "responseBody"
+#       - log: "Response body is: {{responseBody}}" # Taki będzie komunikat logowania: "Response body is: null"
+# - post:
+#     url: "{{ target }}post"
+#     json:
+#       username: "Test User"
+#       password: "Temp Password"
+#-------------------------------------------------------------------------------------------------------------
+#ciekawostki:
+#Szybki i prosty test w Artillery bez pisania kodu, uruchamiany samym poleceniem: polecenie "$ artillery quick --count 5 -n (lub -num) 10 https://onet.pl" - 5 użytkowników przez 10 sek.
+#Tęczowy dinozaur z treścią jaką chcemy: polecenie "$ artillery dino -m "Dorotka" -r

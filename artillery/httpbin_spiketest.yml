@@ -1,0 +1,43 @@
+# TEST SZCZYTOWEGO OBCIĄŻENIA: Gwałtowny, nagły wzrost il. użytkowników lub transakcji w b. krótkim czasie
+# Może to być wynik np. włączenia testowanego przez nas zasobu w jakieś trendy internetowe lub konsekwencja kampanii reklamowej uruchomionej przez dział marketingu bez uprzedzenia deweloperów. Aby uniknąć problemów w takich przypadkach, przeprowadzamy spike testing.
+config:
+  target: "http://httpbin.org/"
+  phases:
+    - duration: 5 # 300
+      arrivalRate: 5
+      name: Spike-pre Warm-Up
+    - duration: 5 # 10
+      arrivalRate: 50
+      name: Spike test
+    - duration: 5 # 300
+      arrivalRate: 5
+      name: Spike-post Cool-down
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1000
+    conditions:
+      - expression: "http.response_time.p95 < 5" # expression to wartość polecenia
+      - expression: "http.response_time.max < 10"
+      - expression: http.codes.200 > 0
+      - expression: vusers.failed == 0
+      - expression: "http.request_rate >= 3 and http.response_time.max < 600"
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"
+      - post:
+          url: "{{ target }}post"
+          json:
+            username: "Test User"
+            password: "Temp Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"
+      # logi wykomentowujemy jeśli zwiększamy długość trwania testu lub użytkowników, bo będzie ich za dużo się pojawiało i raport będzie mało czytelny. Jest to bardzo przydatne na etapie debugowania skryptu podczas pracy z jednym vuser, ale niepotrzebne podczas pracy z prawdziwymi danymi.
+      # - log: "Json value from response is: {{request_body}}"
+      # - log: "Host value from response is: {{host}}"

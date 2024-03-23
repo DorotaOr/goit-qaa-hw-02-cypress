@@ -1,0 +1,21 @@
+config:
+  target: "http://httpbin.org/"
+
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 30 # rampTo: to możliwość liniowego zwiększania liczby wirtualnych użytkowników co sekundę. W tym przypadku co sekundę liczba użytkowników będzie rosła o 30/60 = 0,5. Czyli w pierwszej i drugiej sekundzie testu zostanie utworzony 1 użytkownik, następnie w trzeciej i czwartej sekundzie 2 użytkowników i tak dalej, aż do 30 użytkowników na sekundę w 60tej sekundzie testu.
+
+  ensure:
+    - p95: "<=10"
+    - max: "<=1000"
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}anything"
+          capture:
+            - json: "$.json"
+              as: "responseBody"
+      - log: "Response body is: {{responseBody}}"

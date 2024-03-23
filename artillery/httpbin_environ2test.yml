@@ -1,0 +1,31 @@
+# Aby rozwijać i debugować test, bardziej wydajne jest ustawienie fazy z jednym wirtualnym użytkownikiem, aby uruchomić ją lokalnie, a ona szybko się sprawdzi i zwróci wynik. A dla pełnoprawnego testu wydajnościowego trzeba przygotować fazę z parametrami działania. Można też skonfigurować fazy dla różnych typów testów obciążeniowych. Na przykład połączmy fazy dla scenariuszy debugowania, obciążenia i obciążenia spike.
+# Zmienna docelowa jest ponownie włączona do ogólnej konfiguracji. Podczas uruchamiania testu z parametrem -e local: (artillery run -e local test.yaml). Zostanie utworzony 1 wirtualny użytkownik, skrypt zostanie wykonany 1 raz i test się zakończy. Bonusem tej metody konfiguracji jest możliwość zachowania wszystkich niezbędnych faz w jednym pliku.
+config:
+  target: "http://httpbin.org/"
+  environments:
+    **local**:
+      phases:
+        - duration: 1
+          arrivalRate: 1
+          name: Phase for developing and debugging test scenarios
+    **load**:
+      phases:
+        - duration: 1800
+          arrivalRate: 2
+          name: Load test configuration
+    **spike**:
+      phases:
+        - duration: 300
+          arrivalRate: 2
+          name: Spike-pre Warm-Up
+        - duration: 10
+          arrivalRate: 20
+          name: Spike test
+        - duration: 300
+          arrivalRate: 2
+          name: Spike-post Cool-down
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"

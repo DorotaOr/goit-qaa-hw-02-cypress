@@ -1,0 +1,21 @@
+# Artillery posiada ciekawą funkcję z podwójnym dnem, czyli możliwość konfigurowania faz testów dla różnych środowisk. Jest to bardzo przydatne, gdy chcemy mieć możliwość uruchomienia tego samego testu z różnymi ustawieniami faz i ewentualnie na różnych serwerach. Załóżmy, że mamy osobne środowiska testowe skonfigurowane dla testów Stress i Volume. Scenariusz testu pozostanie taki sam, ale ustawienia fazy i docelowego adresu URL będą inne. Konfiguracja testu może wyglądać tak (przykład tylko do celów demonstracyjnych).
+# Podczas uruchamiania testu środowisko określa się za pomocą parametru -e: (artillery run -e stress test.yaml), więc uruchomione zostaną tylko fazy skonfigurowane w sekcji environments: stress.
+config:
+  environments:
+    **stress**:
+      target: "http://stress_test_environment.org/"
+      phases:
+        - duration: 600
+          arrivalRate: 6
+          name: Stress test
+    **volume**:
+      target: "http://volume_test_environment.org/"
+      phases:
+        - duration: 18000
+          arrivalRate: 1
+          name: Volume test
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"

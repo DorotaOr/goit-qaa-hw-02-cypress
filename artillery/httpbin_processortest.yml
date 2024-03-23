@@ -1,0 +1,16 @@
+config:
+  target: "http://httpbin.org/"
+  processor: "processor.js"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: File Upload
+scenarios:
+  - name: Uploading a file
+    flow:
+      - post:
+          url: "{{ target }}anything"
+          beforeRequest: "**setupMultipartFormData**"
+# Udostępniam metodę setupMultipartFormData w skrypcie, podłączając procesor w konfiguracji testowej i dodaję metodę do testu za pomocą haka beforeRequest.
+
+# Testowy punkt końcowy http://httpbin.org/anything zwróci w odpowiedzi to samo, co wysyłamy w żądaniu, tj. zakodowany w base64 plik photo.jpg.

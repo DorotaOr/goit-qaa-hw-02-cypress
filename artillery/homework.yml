@@ -1,0 +1,39 @@
+config:
+  target: "https://jsonplaceholder.typicode.com/"
+  payload:
+    path: "homework.csv"
+    fields:
+      - "title"
+      - "body"
+      - "userId"
+    order: sequence
+  phases:
+    - duration: 5
+      arrivalRate: 2
+      name: Spike-pre Warm-Up
+    - duration: 5
+      arrivalRate: 10
+      name: Spike test
+    - duration: 5
+      arrivalRate: 2
+      name: Spike-post Cool-down
+
+  plugins:
+    ensure: {}
+  ensure:
+    conditions:
+      - expression: http.codes.200 > 0
+      - expression: "http.request_rate >= 2 and http.response_time.max < 600"
+      - expression: "http.response_time.p95 <= 200"
+      - expression: vusers.failed == 0
+
+scenarios:
+  - flow:
+      - get:
+          url: "/posts/1"
+      - post:
+          url: "/posts"
+          json:
+            title: "{{ title }}"
+            body: "{{ body }}"
+            userId: "{{ userId }}"

@@ -1,0 +1,37 @@
+# TEST OBCIĄŻENIOWY: Ekstremalnie wysokie lub zwiększające się obciążenie, aby zidentyfikować punkty krytyczne lub ograniczenia systemu.
+# Zwiększam liczbę użytkowników na sekundę do 6, co daje 360 na minutę, czyli 3,6 razy więcej niż oczekiwane obciążenie (100/1min.) oraz skracam test do 10 minut (600 s)
+config:
+  target: "http://httpbin.org/"
+  phases:
+    - duration: 5 # w konspekcie 600, tj. 10 minut - realny test
+      arrivalRate: 6
+      name: Stress Test
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1000
+    conditions:
+      - expression: "http.response_time.p95 < 5" # expression to wartość polecenia
+      - expression: "http.response_time.max < 10"
+      - expression: http.codes.200 > 0
+      - expression: vusers.failed == 0
+      - expression: "http.request_rate >= 3 and http.response_time.max < 600"
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"
+      - post:
+          url: "{{ target }}post"
+          json:
+            username: "Test User"
+            password: "Temp Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"
+      # logi wykomentowujemy jeśli zwiększamy długość trwania testu lub użytkowników, bo będzie ich za dużo się pojawiało i raport będzie mało czytelny. Jest to bardzo przydatne na etapie debugowania skryptu podczas pracy z jednym vuser, ale niepotrzebne podczas pracy z prawdziwymi danymi.
+      - log: "Json value from response is: {{request_body}}"
+      - log: "Host value from response is: {{host}}"

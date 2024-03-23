@@ -1,0 +1,40 @@
+# TEST WYTRZYMAŁOŚCIOWY LUB DŁUGOTRWAŁOŚCI (endurance lub soak): długotrwałe obciążenie
+config:
+  target: "http://httpbin.org/"
+  phases:
+    - duration: 24000
+      arrivalRate: 5
+      name: Endurance_Soak test
+  # Po uruchomieniu odpowiedzi testu zawsze przeprowadza się analizę rezultatów. Czy otrzymane parametry odpowiadają naszym oczekiwaniom. Artillery daje możliwość częściowej automatyzacji tego procesu za pomocą wbudowanego pluginu ensure. Ensure można podłączyć poprzez dodanie sekcji plugins do sekcji config:
+  plugins:
+    ensure: {}
+  ensure:
+    # Thresholds opisuje górne wartości progowe, które przyjmujemy jako dopuszczalne. Jeśli te wartości będą za wysokie, to walidacja zostanie uznana za niewykonaną albo “się wyłoży”. Na przykład chcemy się przekonać, że 95 procent naszych użytkowników otrzyma odpowiedź na żądanie http w ciągu jednej sekundy lub szybciej.
+    thresholds:
+      - http.response_time.p95: 1000
+    # Conditions, to analog assertion w językach programowania. To warunek, który powinien być wykorzystywany, żeby kontrola “się odbyła” albo kilka połączonych warunków w jednym poleceniu.
+    conditions:
+      - expression: "http.response_time.p95 < 5" # expression to wartość polecenia
+      - expression: "http.response_time.max < 10"
+      - expression: http.codes.200 > 0
+      - expression: vusers.failed == 0
+      - expression: "http.request_rate >= 2 and http.response_time.max < 600"
+      # chcemy się przekonać, czy liczba żądań na sekundę jest większa lub równa 2. (Przypominam, że w tym teście wirtualny użytkownik wykonuje scenariusz dwóch żądań na sekundę.) Więc liczba żądań na sekundę (parametr request_rate) będzie równy dwa, więc polecenie http.request_rate >= 2 zwróci true, a kontrola będzie zakończona sukcesem. Dodamy jeszcze sprawdzenie czasu najwolniejszego żądania, aby nie przekroczył 600 milisekund. Będzie ono wyglądało tak http.response_time.max < 600. Połączymy te polecenia w jeden condition za pomocą "and". Jeśli są dwa lub więcej połączone, to muszą być w cudzysłowiu.
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"
+      - post:
+          url: "{{ target }}post"
+          json:
+            username: "Test User"
+            password: "Test Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"
+      - log: "Json value from response is: {{request_body}}"
+      - log: "Host value from response is: {{host}}"

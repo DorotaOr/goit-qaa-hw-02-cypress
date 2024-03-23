@@ -1,0 +1,52 @@
+# TEST SKALOWALNOŚCI: Radzenie sobie ze zwiększającym się obciążeniem. Składa się z kilku faz, z których każda będzie nieco mocniejsza od poprzedniej.
+# Czas trwania: 5 min. (300 s) wystarczy, aby ustabilizować system pod aktualnym obciążeniem. Co 5 min. poziom obciążenia wzrasta.
+# Przy tego typu testach bardzo ważne jest monitorowanie strony serwerowej systemu, aby zobaczyć jak zmienia się wykorzystanie zasobów systemowych wraz ze wzrostem obciążenia.
+# Aby to zobaczyć jak różni się czas wykonania żądania HTTP dla jednej fazy w porównaniu do drugiej fazy, trzeba uruchomić test z każdą fazą osobno i zapisać wyniki.
+# Test skalowalności jest zazwyczaj skonfigurowany w zakresie operacyjnym systemu.
+config:
+  target: "http://httpbin.org/"
+  phases:
+    - duration: 5 # 300
+      arrivalRate: 2
+      name: Scalability test 1
+    - duration: 5 # 300
+      arrivalRate: 4
+      name: Scalability test 2
+    - duration: 5 # 300
+      arrivalRate: 8
+      name: Scalability test 3
+    - duration: 5 # 300
+      arrivalRate: 16
+      name: Scalability test 4
+    - duration: 5 # 300
+      arrivalRate: 32
+      name: Scalability test 5
+  plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1000
+    conditions:
+      - expression: "http.response_time.p95 < 5" # expression to wartość polecenia
+      - expression: "http.response_time.max < 10"
+      - expression: http.codes.200 > 0
+      - expression: vusers.failed == 0
+      - expression: "http.request_rate >= 3 and http.response_time.max < 600"
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"
+      - post:
+          url: "{{ target }}post"
+          json:
+            username: "Test User"
+            password: "Temp Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"
+      # logi wykomentowujemy jeśli zwiększamy długość trwania testu lub użytkowników, bo będzie ich za dużo się pojawiało i raport będzie mało czytelny. Jest to bardzo przydatne na etapie debugowania skryptu podczas pracy z jednym vuser, ale niepotrzebne podczas pracy z prawdziwymi danymi.
+      # - log: "Json value from response is: {{request_body}}"
+      # - log: "Host value from response is: {{host}}"

@@ -1,0 +1,20 @@
+config:
+  target: "http://httpbin.org/"
+
+  phases:
+    - duration: 60
+      arrivalCount: 20 # ArrivalCount: Jest to całkowita liczba użytkowników, którzy zostaną utworzeni podczas trwania czasu. W tym przykładzie jeden wirtualny użytkownik będzie tworzony mniej więcej co 3 sekundy. Artillery sam oblicza ile vusers będzie na sek.
+
+  ensure:
+    - p95: "<=10"
+    - max: "<=1000"
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}anything"
+          capture:
+            - json: "$.json"
+              as: "responseBody"
+      - log: "Response body is: {{responseBody}}"

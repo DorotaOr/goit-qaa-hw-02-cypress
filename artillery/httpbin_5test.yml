@@ -1,0 +1,21 @@
+config:
+  target: "http://httpbin.org/"
+
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      maxVusers: 10 # ogranicza maksymalną il. jednoczesnych użytkowników. Np. scenariusz trwa 20 sekund. Wtedy pierwszy użytkownik zakończy wykonywanie swojego scenariusza w 20. sekundzie testu, a w tym czasie co sekundę będą dodawani nowi wirtualni użytkownicy. Przy arrivalRate: 1, da to 20 jednoczesnych wirtualnych użytkowników w każdym punkcie czasowym po 20. sekundzie testu. Parametr maxVusers pomoże to kontrolować, że nie przekroczę danej il. vusers w moim teście.
+    - pause: 60 # pauzujemy test, aby np. środowisko się uspokoiło
+  ensure:
+    - p95: "<=10"
+    - max: "<=1000"
+
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}anything"
+          capture:
+            - json: "$.json"
+              as: "responseBody"
+      - log: "Response body is: {{responseBody}}"

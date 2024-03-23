@@ -1,0 +1,45 @@
+# TEST OBJĘTOŚCI: Obsługa (przetwarzanie, przechowywanie, manipulacja) dużej objętości danych w normalnych warunkach pracy. Może to być load test lub scalability test
+# Np. należy wypełnić sklep internetowy dodatkowymi nowymi produktami, aby zwiększyć całkowitą liczbę produktów. Zarejestruj nowych użytkowników testowych, dodaj do ich koszyka 50 produktów (warunkowo), dodaj do każdego z nich 10 adresów i kart płatniczych itd. Zwiększyć liczbę podmiotów obsługiwanych przez system o 10 lub więcej razy.
+# Dość często funkcje są realizowane poprzez pętle lub generatory i wyliczanie elementów, lub pętlę w pętli, lub wyliczanie elementów po ich pogrupowaniu, złożone zapytania do bazy danych itd. Taka logika jest bardzo wrażliwa na liczbę przetwarzanych rekordów, a testowanie objętości pomoże zidentyfikować potencjalne problemy z tym związane.
+config:
+  target: "http://httpbin.org/"
+  phases:
+    - duration: 5 # 300
+      arrivalRate: 2
+      name: Volume test 1
+    - duration: 5 # 300
+      arrivalRate: 4
+      name: Volume test 2
+    - duration: 5 # 300
+      arrivalRate: 8
+      name: Volume test 3
+   plugins:
+    ensure: {}
+  ensure:
+    thresholds:
+      - http.response_time.p95: 1000
+    conditions:
+      - expression: "http.response_time.p95 < 5" # expression to wartość polecenia
+      - expression: "http.response_time.max < 10"
+      - expression: http.codes.200 > 0
+      - expression: vusers.failed == 0
+      - expression: "http.request_rate >= 3 and http.response_time.max < 600"
+scenarios:
+  - name: Getting a resource
+    flow:
+      - get:
+          url: "{{ target }}get"
+      - post:
+          url: "{{ target }}post"
+          # Tu np. można zrobić pętlę wstawiania dużej ilości danych:
+          json:
+            username: "Test User"
+            password: "Temp Password"
+          capture:
+            - json: "$.json"
+              as: "request_body"
+            - json: "$.headers.Host"
+              as: "host"
+      # logi wykomentowujemy jeśli zwiększamy długość trwania testu lub użytkowników, bo będzie ich za dużo się pojawiało i raport będzie mało czytelny. Jest to bardzo przydatne na etapie debugowania skryptu podczas pracy z jednym vuser, ale niepotrzebne podczas pracy z prawdziwymi danymi.
+      # - log: "Json value from response is: {{request_body}}"
+      # - log: "Host value from response is: {{host}}"
